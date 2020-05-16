@@ -1,19 +1,20 @@
 import { Application, TSConfigReader, TypeDocReader } from 'typedoc';
+import { TypedocJson } from './Types';
 
-const app = new Application();
+export function generateTypedocJson(source: string): TypedocJson | null {
+	const app = new Application();
 
-// If you want TypeDoc to load tsconfig.json / typedoc.json files
-app.options.addReader(new TSConfigReader());
-app.options.addReader(new TypeDocReader());
+	// If you want TypeDoc to load tsconfig.json / typedoc.json files
+	app.options.addReader(new TSConfigReader());
+	app.options.addReader(new TypeDocReader());
 
-app.bootstrap({
-	inputFiles: ['./src'],
-	mode: 'modules'
-});
+	app.bootstrap({
+		inputFiles: [source],
+		mode: 'modules'
+	});
 
-const project = app.convert(app.expandInputFiles(['src']));
+	const project = app.convert(app.expandInputFiles([source]));
+	if (project) return app.serializer.projectToObject(project);
 
-if (project) {
-	const json = app.serializer.projectToObject(project);
-	console.log(json);
+	return null;
 }

@@ -1,49 +1,57 @@
-import * as yargs from 'yargs';
-import { version } from '../../package.json';
+import { config as cliargs } from './Config';
+import { generateTypedocJson } from './util/TypedocJsonGenerator';
+import { relative, join, dirname } from 'path';
+import { readJSON, outputFile } from 'fs-nextra';
+import { readFile } from 'fs/promises';
+import { DocConfig, DocConfigCategory, DocConfigFile } from './util/Types';
 
-export const config = yargs
-	.usage('$0 [command] [options]')
-	.epilogue(`Typedoc Generator v${version}`)
+export class Cli {
 
-	.option('source', {
-		type: 'string',
-		alias: 'src',
-		describe: 'The source of the project',
-		normalize: true
-	})
-	.option('root', {
-		type: 'string',
-		alias: 'r',
-		describe: 'Root directory of the project',
-		normalize: true,
-		default: '.'
-	})
-	.option('output', {
-		type: 'string',
-		alias: 'o',
-		describe: 'Path to output file',
-		normalize: true
-	})
-	.option('verbose', {
-		type: 'boolean',
-		alias: 'log',
-		describe: 'Logs extra information to the console',
-		default: false
-	})
-	.option('config', {
-		type: 'string',
-		alias: 'C',
-		describe: 'Location of the docconfig.json file for all the guides/tutorials',
-		group: 'Special:',
-		normalize: true,
-		config: true,
-		configParser: configFile => require(configFile)
-	})
-	.help()
-	.group('help', 'Special:')
-	.version(version)
-	.alias('version', 'v')
-	.group('version', 'Special:')
-	.completion('completion')
-	.wrap(yargs.terminalWidth())
-	.argv;
+	public guides = {};
+	public categoryCount = 0;
+	public fileCount = 0;
+
+	public async run(): Promise<never> {
+		const typedoc = generateTypedocJson(cliargs.source);
+		if (!typedoc) return process.exit(1);
+		if (cliargs.config) {
+			await this.loadGuides();
+			(typedoc as any).guides = this.guides;
+		}
+
+		if (cliargs.output) {
+			console.log(`Writing to ${cliargs.output}...`);
+			await outputFile(cliargs.output, JSON.stringify(typedoc));
+		}
+
+		console.log('Done!');
+		return process.exit(0);
+	}
+
+	public async loadGuides(): Promise<void[][]> {
+		const docconfig: DocConfig = await readJSON(cliargs.config);
+
+		return Promise.all(docconfig.map(category => this.parseCategory(category)));
+	}
+
+	public parseCategory(category: DocConfigCategory): Promise<void[]> {
+		const dir = join(dirname(cliargs.config), category.path || category.name);
+
+		this.guides[category.name] = { name: category.name, files: [] };
+		this.categoryCount++;
+
+		return Promise.all(category.files.map(file => this.parseFile(dir, file, category)));
+	}
+
+	public async parseFile(filePath: string, file: DocConfigFile, category: DocConfigCategory): Promise<void> {
+		const content = await readFile(filePath, 'utf-8');
+		const path = relative(cliargs.root, filePath).replace(/\\/g, '/');
+
+		if (cliargs.verbose) console.log(`Loaded custom docs file ${category.name}/${file.name}`);
+
+		this.guides[category.name].files[file.path] = { name: file.name, content, path };
+		this.fileCount++;
+	}
+
+
+}
