@@ -3,6 +3,9 @@
   "version": "0.0.1",
   "description": "A cli tool for creating json for the @dirigeants/site website",
   "main": "dist/index.js",
+  "bin": {
+    "typedocgen": "dist/index.js"
+  },
   "scripts": {
     "prepublishOnly": "yarn build",
     "build": "tsc",
