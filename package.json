@@ -20,7 +20,7 @@
   "author": "dirigeants",
   "license": "MIT",
   "engines": {
-    "node": ">=10.1.0"
+    "node": ">=12.12.0"
   },
   "devDependencies": {
     "@istanbuljs/nyc-config-typescript": "^1.0.1",
