@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import { Cli } from './lib/Cli';
 
 new Cli().run().catch(err => {
