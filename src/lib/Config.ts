@@ -1,5 +1,6 @@
 import * as yargs from 'yargs';
-import { version } from '../../package.json';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { version } = require('../../package.json');
 
 export const config = yargs
 	.usage('$0 [command] [options]')
