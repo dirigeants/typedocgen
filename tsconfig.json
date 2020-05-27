@@ -8,9 +8,9 @@
 		"outDir": "./dist",
 		"sourceMap": true,
 		"types": ["node"],
-    "declaration": true,
-    "noUnusedLocals": true,
-    "removeComments": false,
+		"declaration": true,
+		"noUnusedLocals": true,
+		"removeComments": false,
 		"target": "es2019",
 		"resolveJsonModule": true
 	},
