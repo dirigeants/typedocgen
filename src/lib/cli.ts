@@ -1,9 +1,10 @@
 import { config as cliargs } from './config';
-import { generateTypedocJson } from './util/TypedocJsonGenerator';
 import { relative, join, dirname } from 'path';
 import { readJSON, outputFile } from 'fs-nextra';
 import { promises } from 'fs';
-import { DocConfig, DocConfigCategory, DocConfigFile } from './util/Types';
+import type { DocConfig, DocConfigCategory, DocConfigFile, TypedocJson } from './util/types';
+import { Application, TSConfigReader, TypeDocReader } from 'typedoc';
+
 
 interface Guide {
 	name: string;
@@ -30,7 +31,7 @@ export class Cli {
 			return process.exit(1);
 		}
 
-		const typedoc = generateTypedocJson(cliargs.source);
+		const typedoc = this.generateTypedocJson(cliargs.source);
 		if (!typedoc) return process.exit(1);
 
 		if (cliargs.config) {
@@ -68,6 +69,24 @@ export class Cli {
 		if (cliargs.verbose) console.log(`Loaded custom docs file ${category.name}/${file.name}`);
 		this.guides[category.name].files[file.path] = { name: file.name, content, path };
 		this.fileCount++;
+	}
+
+	generateTypedocJson(source: string): TypedocJson | null {
+		const app = new Application();
+
+		// If you want TypeDoc to load tsconfig.json / typedoc.json files
+		app.options.addReader(new TSConfigReader());
+		app.options.addReader(new TypeDocReader());
+
+		app.bootstrap({
+			inputFiles: [source],
+			mode: 'modules'
+		});
+
+		const project = app.convert(app.expandInputFiles([source]));
+		if (project) return app.serializer.projectToObject(project);
+
+		return null;
 	}
 
 
