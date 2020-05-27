@@ -1,23 +1,40 @@
-import { config as cliargs } from './Config';
+import { config as cliargs } from './config';
 import { generateTypedocJson } from './util/TypedocJsonGenerator';
 import { relative, join, dirname } from 'path';
 import { readJSON, outputFile } from 'fs-nextra';
 import { promises } from 'fs';
 import { DocConfig, DocConfigCategory, DocConfigFile } from './util/Types';
 
+interface Guide {
+	name: string;
+	files: Record<string, GuideFile>;
+}
+
+interface GuideFile {
+	name: string;
+	content: string;
+	path: string;
+}
+
 export class Cli {
 
-	public guides = {};
+	public guides: Record<string, Guide> = {};
 	public categoryCount = 0;
 	public fileCount = 0;
 
 	public async run(): Promise<never> {
 		console.log(`Currently generating typedoc json in all source directories`);
+
+		if (!cliargs.source) {
+			console.error('No source argument provided, exiting!');
+			return process.exit(1);
+		}
+
 		const typedoc = generateTypedocJson(cliargs.source);
 		if (!typedoc) return process.exit(1);
 
 		if (cliargs.config) {
-			await this.loadGuides();
+			await this.loadGuides(cliargs.config);
 			console.log(`${this.fileCount} custom docs file${this.fileCount !== 1 ? 's' : ''} in ${this.categoryCount} categor${this.categoryCount !== 1 ? 'ies' : 'y'} loaded.`);
 			(typedoc as any).guides = this.guides;
 		}
@@ -31,14 +48,13 @@ export class Cli {
 		return process.exit(0);
 	}
 
-	public async loadGuides(): Promise<void[][]> {
-		const docconfig: DocConfig = await readJSON(cliargs.config);
+	public async loadGuides(configPath: string): Promise<void[][]> {
+		const docconfig: DocConfig = await readJSON(configPath);
 
-		return Promise.all(docconfig.map(category => this.parseCategory(category)));
+		return Promise.all(docconfig.map(category => this.parseCategory(category, join(dirname(configPath), category.path || category.name))));
 	}
 
-	public parseCategory(category: DocConfigCategory): Promise<void[]> {
-		const dir = join(dirname(cliargs.config), category.path || category.name);
+	public parseCategory(category: DocConfigCategory, dir: string): Promise<void[]> {
 		this.guides[category.name] = { name: category.name, files: {} };
 		this.categoryCount++;
 

@@ -10,7 +10,8 @@ export const config = yargs
 		type: 'string',
 		alias: 'src',
 		describe: 'The source of the project',
-		normalize: true
+		normalize: true,
+		required: true
 	})
 	.option('root', {
 		type: 'string',
