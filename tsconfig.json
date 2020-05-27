@@ -2,7 +2,8 @@
 	"compileOnSave": true,
 	"compilerOptions": {
 		"alwaysStrict": true,
-		"lib": ["esnext"],
+		"strict": true,
+		"lib": ["ESNext"],
 		"module": "commonjs",
 		"noUnusedParameters": true,
 		"outDir": "./dist",
@@ -11,8 +12,9 @@
 		"declaration": true,
 		"noUnusedLocals": true,
 		"removeComments": false,
-		"target": "es2019",
-		"resolveJsonModule": true
+		"target": "ES2019",
+		"incremental": true,
+		"resolveJsonModule": true,
 	},
 	"exclude": [
 		"node_modules",
@@ -21,6 +23,7 @@
 		"scripts"
 	],
 	"include": [
-		"src"
+		"./src/**/*",
+		"./test/**/*"
 	]
 }
